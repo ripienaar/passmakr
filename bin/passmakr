@@ -1,0 +1,88 @@
+#!/usr/bin/ruby
+
+# == Synopsis
+#
+# passmakr: Create passwords and displays common used formats
+#
+# == Description
+# Simple script to create passwords using either phonemic, random or urandom algorithms.
+# Also shows the password in other common used formats:
+#
+# * Crypt - for use with Apache and other Unix password mechanisms
+# * MD5 - use in many web sites and also in shadow passwords etc
+# * Nato - good for reading out over the phone
+# * Rot 13 - some nostalgic laughs!
+#
+# == Usage
+# --length, -l:
+#   How long the password shold be, defaults to 8
+#
+# --phonemic, -p:
+#   Creates human readable and pronouncable passwords
+#   this is the default mode.
+#
+# --random, -r
+#   Creates pseudo random passwords using the ruby rand() function
+#
+# --urandom, -u
+#   Creates better random numbers by using /dev/urandom
+#
+# == Download and Further Information
+# Latest version and other information can be fond at http://code.google.com/p/passmakr/
+#
+# == Author
+# R.I.Pienaar <rip@devco.net>
+#
+# == Licence
+# GPL v2
+
+require 'rubygems'
+require 'passmakr'
+require 'getoptlong'
+
+opts = GetoptLong.new(
+    [ '--length', '-l', GetoptLong::REQUIRED_ARGUMENT],
+    [ '--phonemic', '-p', GetoptLong::NO_ARGUMENT],
+    [ '--random', '-r', GetoptLong::NO_ARGUMENT],
+    [ '--urandom', '-u', GetoptLong::NO_ARGUMENT],
+    [ '--help', '-h', GetoptLong::NO_ARGUMENT]
+)
+
+length = 8
+mode = :phonemic
+
+opts.each do |opt, arg|
+    case opt
+        when '--phonemic'
+            mode = :phonemic
+        when '--random'
+            mode = :random
+        when '--urandom'
+            mode = :urandom
+        when '--help'
+            begin
+                require 'rdoc/ri/ri_paths'
+                require 'rdoc/usage'
+                RDoc::usage
+            rescue Exception => e
+                puts("Install RDoc::usage or view the comments in the top of the script to get detailed help")
+            end
+
+            exit
+        when '--length'
+            length = arg.to_i
+    end
+end
+
+pw = Passmakr.new(mode, length)
+
+puts("#{length} character #{mode.to_s} password:")
+puts
+puts("   Password: #{pw.password[:string]}")
+puts("   Crypt:    #{pw.password[:crypt]}")
+puts("   MD5:      #{pw.password[:md5]}")
+puts("   Rot 13:   #{pw.password[:rot13]}")
+puts("   NATO:     #{pw.password[:nato]}")
+puts
+
+# vim:tabstop=4:expandtab:ai
