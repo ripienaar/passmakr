@@ -45,6 +45,7 @@ opts = GetoptLong.new(
     [ '--phonemic', '-p', GetoptLong::NO_ARGUMENT],
     [ '--random', '-r', GetoptLong::NO_ARGUMENT],
     [ '--urandom', '-u', GetoptLong::NO_ARGUMENT],
+    [ '--password', '-P', GetoptLong::REQUIRED_ARGUMENT],
     [ '--help', '-h', GetoptLong::NO_ARGUMENT]
 )
 
@@ -59,6 +60,8 @@ opts.each do |opt, arg|
             mode = :random
         when '--urandom'
             mode = :urandom
+        when '--password'
+            mode = arg
         when '--help'
             begin
                 require 'rdoc/ri/ri_paths'

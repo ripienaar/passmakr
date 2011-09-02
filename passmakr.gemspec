@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = "passmakr"
-  s.version = "1.0.0"
- 
+  s.version = "1.1.0"
+
   s.authors = ["R.I.Pienaar"]
   s.date = %q{2009-10-11}
   s.default_executable = "passmakr"

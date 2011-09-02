@@ -90,6 +90,7 @@ class Passmakr
     # * :phonemic - produces easily remembered passwords
     # * :random - uses the ruby random function to generate a password
     # * :urandom - uses linux /dev/urandom to generate a password
+    # * anything else will be used as the password instead of generating one
     #
     # Each instance will have a unique hash of password information
     # in the password attribute, the hash will have members:
@@ -107,8 +108,10 @@ class Passmakr
                 pw = urandom(length)
             when :random
                 pw = random(length)
-            else
+            when :phonemic
                 pw = phonemic(length)
+            else
+                pw = mode
         end
 
         preppw(pw)
@@ -119,7 +122,7 @@ class Passmakr
     def get_vowel_or_consonant
         rand( 2 ) == 1 ? VOWEL : CONSONANT
     end
-  
+
     # Generate a memorable password of _length_ characters, using phonemes that
     # a human-being can easily remember. _flags_ is one or more of
     # <em>Passmakr::ONE_DIGIT</em> and <em>Passmakr::ONE_CASE</em>, logically
@@ -137,80 +140,80 @@ class Passmakr
     # Generated passwords may contain any of the characters in
     # <em>Passmakr::PASSWD_CHARS</em>.
     def phonemic(length=8, flags=Passmakr::ONE_CASE)
-  
+
         pw = nil
         ph_flags = flags
-  
+
         loop do
-  
+
             pw = ""
-  
+
             # Separate the flags integer into an array of individual flags
             feature_flags = [ flags & ONE_DIGIT, flags & ONE_CASE ]
-  
+
             prev = []
             first = true
             desired = get_vowel_or_consonant
-  
+
             # Get an Array of all of the phonemes
             phonemes = PHONEMES.keys.map { |ph| ph.to_s }
             nr_phonemes = phonemes.size
-  
+
             while pw.length < length do
-  
+
                 # Get a random phoneme and its length
                 phoneme = phonemes[ rand( nr_phonemes ) ]
                 ph_len = phoneme.length
-  
+
                 # Get its flags as an Array
                 ph_flags = PHONEMES[ phoneme.to_sym ]
                 ph_flags = [ ph_flags & CONSONANT, ph_flags & VOWEL,
                     ph_flags & DIPHTHONG, ph_flags & NOT_FIRST ]
-  
+
                 # Filter on the basic type of the next phoneme
                 next if ph_flags.include? desired
-  
+
                 # Handle the NOT_FIRST flag
                 next if first and ph_flags.include? NOT_FIRST
-  
+
                 # Don't allow a VOWEL followed a vowel/diphthong pair
                 next if prev.include? VOWEL and ph_flags.include? VOWEL and
                     ph_flags.include? DIPHTHONG
-  
+
                 # Don't allow us to go longer than the desired length
                 next if ph_len > length - pw.length
-  
+
                 # We've found a phoneme that meets our criteria
                 pw << phoneme
-  
+
                 # Handle ONE_CASE
                 if feature_flags.include? ONE_CASE
-  
+
                     if (first or ph_flags.include? CONSONANT) and rand( 10 ) < 3
                         pw[-ph_len, 1] = pw[-ph_len, 1].upcase
                         feature_flags.delete ONE_CASE
                     end
-  
+
                 end
-  
+
                 # Is password already long enough?
                 break if pw.length >= length
-  
+
                 # Handle ONE_DIGIT
                 if feature_flags.include? ONE_DIGIT
-  
+
                     if ! first and rand( 10 ) < 3
                         pw << ( rand( 10 ) + ?0 ).chr
                         feature_flags.delete ONE_DIGIT
-  
+
                         first = true
                         prev = []
                         desired = get_vowel_or_consonant
                         next
                     end
-  
+
                 end
-  
+
                 if desired == CONSONANT
                     desired = VOWEL
                 elsif prev.include? VOWEL or ph_flags.include? DIPHTHONG or
@@ -219,20 +222,20 @@ class Passmakr
                 else
                     desired = VOWEL
                 end
-  
+
                 prev = ph_flags
                 first = false
             end
-  
+
             # Try again
             break unless feature_flags.include? ONE_CASE or feature_flags.include? ONE_DIGIT
-  
+
         end
-        
+
         pw
     end
-  
-  
+
+
     # Generate a random password of _length_ characters. Unlike the
     # Passmakr.phonemic method, no attempt will be made to generate a memorable
     # password. Generated passwords may contain any of the characters in
@@ -240,15 +243,15 @@ class Passmakr
     def random(length=8)
         pw = ""
         nr_chars = PASSWD_CHARS.size
-  
+
         srand()
 
         length.times { pw << PASSWD_CHARS[ rand( nr_chars ) ] }
-  
+
         pw
     end
-  
-  
+
+
     # An alternative to Passmakr.random. It uses the <tt>/dev/urandom</tt>
     # device to generate passwords, returning +nil+ on systems that do not
     # implement the device. The passwords it generates may contain any of the
@@ -256,10 +259,10 @@ class Passmakr
     # characters + and /.
     def urandom(length=8)
         return nil unless File.chardev? '/dev/urandom'
-  
+
         rand_data = nil
         File.open( "/dev/urandom" ) { |f| rand_data = f.read( length ) }
-  
+
         # Base64 encode it
         pw = [ rand_data ].pack( 'm' )[ 0 .. length - 1 ]
     end
@@ -269,24 +272,24 @@ class Passmakr
     # <em>Passmakr::SALT_CHARS</em>. If no salt is given, a randomly generated
     # salt will be used.
     def crypt(pw, type=DES, salt='')
-  
+
         unless ( salt.split( // ) - SALT_CHARS.split( // ) ).empty?
             raise CryptError, 'bad salt'
         end
-  
+
         salt = random( type ? 2 : 8 ) if salt.empty?
-  
+
         # (Linux glibc2 interprets a salt prefix of '$1$' as a call to use MD5
         # instead of DES when calling crypt(3))
         salt = '$1$' + salt if type == MD5
-  
+
         crypt = pw.crypt(salt)
-  
+
         # Raise an exception if MD5 was wanted, but result is not recognisable
         if type == MD5 && crypt !~ /^\$1\$/
             raise CryptError, 'MD5 not implemented'
         end
-  
+
         crypt
     end
 
