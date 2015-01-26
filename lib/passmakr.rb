@@ -319,7 +319,7 @@ class String
         if self.size > 1
             result = self.split("").map {|c| c.to_nato }.join(" ")
         else
-            ansi = self[0]
+            ansi = self.bytes.first
 
             if ansi >= 65 && ansi <= 90
                 result = NATOALPHA[ansi-65].capitalize

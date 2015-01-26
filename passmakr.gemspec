@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "passmakr"
-  s.version = "1.1.0"
+  s.version = "1.1.1"
 
   s.authors = ["R.I.Pienaar"]
   s.date = %q{2009-10-11}
@@ -10,7 +10,8 @@ Gem::Specification.new do |s|
   s.executables = ["passmakr"]
   s.files = ["COPYING", "passmakr.gemspec", "bin/passmakr", "lib/passmakr.rb"]
   s.has_rdoc = true
-  s.homepage = "http://code.google.com/p/passmakr/"
+  s.homepage = "https://github.com/ripienaar/passmakr"
+  s.licenses = ["Apache-2"]
   s.require_paths = ["lib"]
   s.summary = s.description
 end
